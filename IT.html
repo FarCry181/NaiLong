@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蓝精领 - 专业招聘平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3a78c2',
+                        secondary: '#4a90e2',
+                        accent: '#ff6b6b',
+                        neutral: {
+                            100: '#f8fafc',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                },
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .btn-primary {
+                @apply bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-full transition-all duration-300 shadow-md hover:shadow-lg;
+            }
+            .btn-secondary {
+                @apply bg-white border border-primary text-primary hover:bg-primary/5 font-medium py-2 px-4 rounded-full transition-all duration-300;
+            }
+        }
+    </style>
+</head>
+<body class="bg-neutral-100 font-sans">
+<div id="app">
+    <!-- 导航栏 -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-sm shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center">
+                <img src="https://picsum.photos/60/60" alt="蓝精领Logo" class="w-12 h-12 rounded-full border-2 border-primary/20 shadow-md">
+                <h1 class="ml-3 text-xl font-bold text-primary">蓝精领</h1>
+            </div>
+
+            <nav class="hidden md:flex space-x-6">
+                <a href="#" class="text-neutral-700 hover:text-primary transition-colors font-medium">首页</a>
+                <a href="#" class="text-neutral-700 hover:text-primary transition-colors font-medium">找工作</a>
+                <a href="#" class="text-neutral-700 hover:text-primary transition-colors font-medium">公司</a>
+                <a href="#" class="text-neutral-700 hover:text-primary transition-colors font-medium">资讯</a>
+            </nav>
+
+            <button class="md:hidden text-neutral-700 text-xl">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 行业选择 -->
+    <div class="bg-gradient-to-r from-primary to-secondary py-6 text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-2xl md:text-3xl font-bold mb-4">寻找理想的工作</h2>
+            <p class="text-white/80 mb-6">选择您感兴趣的行业，发现匹配的职位机会</p>
+
+            <div class="flex flex-wrap justify-center gap-2 md:gap-3">
+                <button @click="selectIndustry('it')" :class="industry === 'it' ? 'bg-white text-primary' : 'bg-white/20 hover:bg-white/30'" class="py-2 px-5 rounded-full transition-all duration-300 font-medium text-sm md:text-base">
+                    互联网IT
+                </button>
+                <button @click="selectIndustry('finance')" :class="industry === 'finance' ? 'bg-white text-primary' : 'bg-white/20 hover:bg-white/30'" class="py-2 px-5 rounded-full transition-all duration-300 font-medium text-sm md:text-base">
+                    金融
+                </button>
+                <button @click="selectIndustry('education')" :class="industry === 'education' ? 'bg-white text-primary' : 'bg-white/20 hover:bg-white/30'" class="py-2 px-5 rounded-full transition-all duration-300 font-medium text-sm md:text-base">
+                    教育
+                </button>
+                <button @click="selectIndustry('manufacture')" :class="industry === 'manufacture' ? 'bg-white text-primary' : 'bg-white/20 hover:bg-white/30'" class="py-2 px-5 rounded-full transition-all duration-300 font-medium text-sm md:text-base">
+                    制造业
+                </button>
+                <button @click="selectIndustry('healthcare')" :class="industry === 'healthcare' ? 'bg-white text-primary' : 'bg-white/20 hover:bg-white/30'" class="py-2 px-5 rounded-full transition-all duration-300 font-medium text-sm md:text-base">
+                    医疗健康
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索框 -->
+    <div class="py-8 bg-white shadow-sm">
+        <div class="container mx-auto px-4 max-w-3xl">
+            <div class="relative">
+                <input type="text" v-model="searchQuery" @keyup.enter="searchJobs" placeholder="搜索职位、公司或关键词" class="w-full py-4 px-6 rounded-full border border-neutral-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none shadow-sm transition-all duration-300 text-lg">
+                <button @click="searchJobs" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-full transition-all duration-300 hover:bg-primary/90">
+                    <i class="fa fa-search text-lg"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mt-4 pl-2">
+                <span class="text-neutral-500 text-sm">热门搜索:</span>
+                <a href="#" class="text-primary text-sm hover:underline">前端开发</a>
+                <a href="#" class="text-primary text-sm hover:underline">Java工程师</a>
+                <a href="#" class="text-primary text-sm hover:underline">产品经理</a>
+                <a href="#" class="text-primary text-sm hover:underline">金融分析师</a>
+                <a href="#" class="text-primary text-sm hover:underline">UI设计师</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 筛选条件 -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-neutral-700 text-sm font-medium mb-2">工作地点</label>
+                    <select v-model="locationFilter" class="w-full py-2 px-3 border border-neutral-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        <option value="">全部地点</option>
+                        <option value="beijing">北京</option>
+                        <option value="shanghai">上海</option>
+                        <option value="guangzhou">广州</option>
+                        <option value="shenzhen">深圳</option>
+                        <option value="hangzhou">杭州</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-neutral-700 text-sm font-medium mb-2">薪资范围</label>
+                    <select v-model="salaryFilter" class="w-full py-2 px-3 border border-neutral-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        <option value="">全部薪资</option>
+                        <option value="5k-10k">5K-10K</option>
+                        <option value="10k-15k">10K-15K</option>
+                        <option value="15k-25k">15K-25K</option>
+                        <option value="25k-35k">25K-35K</option>
+                        <option value="35k+">35K+</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-neutral-700 text-sm font-medium mb-2">工作经验</label>
+                    <select v-model="experienceFilter" class="w-full py-2 px-3 border border-neutral-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        <option value="">全部经验</option>
+                        <option value="fresh">应届生</option>
+                        <option value="1-3">1-3年</option>
+                        <option value="3-5">3-5年</option>
+                        <option value="5+">5年以上</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap justify-between items-center">
+                <button @click="clearFilters" class="text-primary text-sm hover:underline flex items-center mb-2 md:mb-0">
+                    <i class="fa fa-refresh mr-1"></i> 重置筛选
+                </button>
+
+                <div class="flex items-center">
+                    <span class="text-neutral-500 text-sm mr-2">排序:</span>
+                    <select v-model="sortBy" class="py-1 px-2 border border-neutral-200 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        <option value="relevance">相关性</option>
+                        <option value="salary_high">薪资从高到低</option>
+                        <option value="salary_low">薪资从低到高</option>
+                        <option value="date">最新发布</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 职位列表 -->
+        <div class="grid grid-cols-1 gap-5">
+            <div class="bg-white rounded-xl shadow-sm p-5 card-hover animate-fade-in" v-for="(job, index) in filteredJobs" :key="index">
+                <div class="flex justify-between items-start">
+                    <div class="flex">
+                        <img :src="job.companyLogo" alt="公司Logo" class="w-16 h-16 rounded-lg object-cover">
+                        <div class="ml-4">
+                            <h3 class="text-lg font-bold text-neutral-800 hover:text-primary transition-colors">
+                                <a href="#">{{ job.title }}</a>
+                            </h3>
+                            <div class="flex items-center mt-1">
+                                <span class="text-neutral-600 text-sm">{{ job.company }}</span>
+                                <span class="mx-2 text-neutral-300">|</span>
+                                <span class="text-neutral-500 text-sm">{{ job.location }}</span>
+                            </div>
+                            <div class="flex items-center mt-1">
+                                <span class="text-accent font-bold text-lg">{{ job.salary }}</span>
+                                <span class="mx-2 text-neutral-300">|</span>
+                                <span class="text-neutral-500 text-sm">{{ job.experience }}</span>
+                                <span class="mx-2 text-neutral-300">|</span>
+                                <span class="text-neutral-500 text-sm">{{ job.education }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="text-neutral-400 hover:text-primary transition-colors">
+                        <i class="fa fa-bookmark-o"></i>
+                    </button>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                        <span v-for="tag in job.tags" :key="tag" class="bg-primary/10 text-primary text-xs px-3 py-1 rounded-full">
+                            {{ tag }}
+                        </span>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-neutral-100 flex justify-between items-center">
+                    <span class="text-neutral-500 text-sm">发布于 {{ job.postDate }}</span>
+                    <button class="btn-primary py-1.5 px-4 text-sm">查看详情</button>
+                </div>
+            </div>
+
+            <!-- 无结果提示 -->
+            <div class="bg-white rounded-xl shadow-sm p-10 text-center" v-if="filteredJobs.length === 0 && !isLoading">
+                <i class="fa fa-search text-4xl text-neutral-300 mb-4"></i>
+                <h3 class="text-lg font-medium text-neutral-700 mb-2">没有找到匹配的职位</h3>
+                <p class="text-neutral-500 mb-4">尝试调整筛选条件或使用不同的关键词</p>
+                <button @click="clearFilters" class="btn-secondary">重置筛选条件</button>
+            </div>
+        </div>
+
+        <!-- 加载更多 -->
+        <div class="mt-8 text-center">
+            <button @click="loadMore" class="btn-secondary" v-if="!isLoading && hasMore">
+                加载更多职位
+            </button>
+            <div class="flex justify-center items-center" v-else-if="isLoading">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <span class="ml-2 text-neutral-600">加载中...</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部 -->
+    <footer class="bg-neutral-800 text-white py-10 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <img src="https://picsum.photos/60/60" alt="蓝精领Logo" class="w-10 h-10 rounded-full border-2 border-white/20">
+                        <h3 class="ml-3 text-lg font-bold">蓝精领</h3>
+                    </div>
+                    <p class="text-neutral-400 text-sm">专业的人才招聘平台，致力于为企业和求职者提供高效、便捷的匹配服务。</p>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-medium mb-4">求职者</h4>
+                    <ul class="space-y-2 text-neutral-400">
+                        <li><a href="#" class="hover:text-white transition-colors">搜索职位</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">职位订阅</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">求职指南</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-medium mb-4">企业</h4>
+                    <ul class="space-y-2 text-neutral-400">
+                        <li><a href="#" class="hover:text-white transition-colors">发布职位</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">搜索简历</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">招聘方案</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-medium mb-4">联系我们</h4>
+                    <ul class="space-y-2 text-neutral-400">
+                        <li class="flex items-center">
+                            <i class="fa fa-map-marker w-5 text-neutral-300"></i>
+                            <span>北京市朝阳区科技园A座1008室</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-phone w-5 text-neutral-300"></i>
+                            <span>400-123-4567</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-envelope w-5 text-neutral-300"></i>
+                            <span>contact@lanjingling.com</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-neutral-700 text-center text-neutral-500 text-sm">
+                <p>© 2025 蓝精领招聘平台 版权所有</p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            industry: 'it',
+            searchQuery: '',
+            jobs: [],
+            locationFilter: '',
+            salaryFilter: '',
+            experienceFilter: '',
+            sortBy: 'relevance',
+            page: 1,
+            isLoading: false,
+            hasMore: true
+        },
+        computed: {
+            filteredJobs() {
+                let filtered = [...this.jobs];
+
+                // 按行业筛选
+                filtered = filtered.filter(job => job.industry === this.industry);
+
+                // 按搜索关键词筛选
+                if (this.searchQuery) {
+                    const query = this.searchQuery.toLowerCase();
+                    filtered = filtered.filter(job =>
+                        job.title.toLowerCase().includes(query) ||
+                        job.company.toLowerCase().includes(query) ||
+                        job.tags.some(tag => tag.toLowerCase().includes(query))
+                    );
+                }
+
+                // 按地点筛选
+                if (this.locationFilter) {
+                    filtered = filtered.filter(job => job.location === this.locationFilter);
+                }
+
+                // 按薪资筛选
+                if (this.salaryFilter) {
+                    filtered = filtered.filter(job => this.matchSalary(job.salary, this.salaryFilter));
+                }
+
+                // 按经验筛选
+                if (this.experienceFilter) {
+                    filtered = filtered.filter(job => this.matchExperience(job.experience, this.experienceFilter));
+                }
+
+                // 排序
+                if (this.sortBy === 'salary_high') {
+                    filtered.sort((a, b) => this.getSalaryAvg(b.salary) - this.getSalaryAvg(a.salary));
+                } else if (this.sortBy === 'salary_low') {
+                    filtered.sort((a, b) => this.getSalaryAvg(a.salary) - this.getSalaryAvg(b.salary));
+                } else if (this.sortBy === 'date') {
+                    filtered.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
+                }
+
+                return filtered;
+            }
+        },
+        mounted() {
+            this.fetchJobs();
+        },
+        methods: {
+            // 选择行业
+            selectIndustry(industry) {
+                this.industry = industry;
+                this.resetAndFetch();
+            },
+
+            // 搜索职位
+            searchJobs() {
+                this.resetAndFetch();
+            },
+
+            // 清除筛选条件
+            clearFilters() {
+                this.searchQuery = '';
+                this.locationFilter = '';
+                this.salaryFilter = '';
+                this.experienceFilter = '';
+                this.sortBy = 'relevance';
+                this.resetAndFetch();
+            },
+
+            // 加载更多职位
+            loadMore() {
+                if (this.isLoading || !this.hasMore) return;
+
+                this.isLoading = true;
+
+                // 模拟API请求延迟
+                setTimeout(() => {
+                    const newJobs = this.generateMockJobs(this.industry, this.page);
+                    this.jobs = [...this.jobs, ...newJobs];
+
+                    // 模拟3页后没有更多数据
+                    this.hasMore = this.page < 3;
+                    this.page++;
+                    this.isLoading = false;
+                }, 1000);
+            },
+
+            // 重置并获取数据
+            resetAndFetch() {
+                this.page = 1;
+                this.jobs = [];
+                this.hasMore = true;
+                this.fetchJobs();
+            },
+
+            // 获取职位数据
+            fetchJobs() {
+                if (this.isLoading || !this.hasMore) return;
+
+                this.isLoading = true;
+
+                // 模拟API请求延迟
+                setTimeout(() => {
+                    const newJobs = this.generateMockJobs(this.industry, this.page);
+                    this.jobs = [...this.jobs, ...newJobs];
+
+                    // 模拟3页后没有更多数据
+                    this.hasMore = this.page < 3;
+                    this.page++;
+                    this.isLoading = false;
+                }, 1000);
+            },
+
+            // 解析薪资范围
+            getSalaryAvg(salaryStr) {
+                const match = salaryStr.match(/(\d+)-(\d+)/);
+                if (match) {
+                    return (parseInt(match[1]) + parseInt(match[2])) / 2;
+                }
+
+                const singleMatch = salaryStr.match(/(\d+)/);
+                if (singleMatch) {
+                    return parseInt(singleMatch[1]);
+                }
+
+                return 0;
+            },
+
+            // 匹配薪资范围
+            matchSalary(jobSalary, filterSalary) {
+                const jobRange = jobSalary.match(/(\d+)/g);
+                const filterRange = filterSalary.match(/(\d+)/g);
+
+                if (!jobRange || !filterRange) return false;
+
+                const jobMin = parseInt(jobRange[0]);
+                const jobMax = jobRange.length > 1 ? parseInt(jobRange[1]) : jobMin;
+
+                const filterMin = parseInt(filterRange[0]);
+                const filterMax = filterRange.length > 1 ? parseInt(filterRange[1]) : Infinity;
+
+                return (jobMin >= filterMin && jobMin <= filterMax) ||
+                    (jobMax >= filterMin && jobMax <= filterMax);
+            },
+
+            // 匹配经验要求
+            matchExperience(jobExp, filterExp) {
+                if (filterExp === 'fresh') {
+                    return jobExp.includes('应届生') || jobExp.includes('不限');
+                } else if (filterExp === '1-3') {
+                    return jobExp.includes('1-3年') || jobExp.includes('不限');
+                } else if (filterExp === '3-5') {
+                    return jobExp.includes('3-5年') || jobExp.includes('5-10年');
+                } else if (filterExp === '5+') {
+                    return jobExp.includes('5-10年') || jobExp.includes('10年以上');
+                }
+                return true;
+            },
+
+            // 生成模拟职位数据
+            generateMockJobs(industry, page) {
+                const baseDate = new Date();
+
+                // 行业配置
+                const industryConfig = {
+                    it: {
+                        titlePrefixes: ['前端', '后端', '全栈', 'UI/UX', '产品', '测试', '数据', '运维'],
+                        titles: ['开发工程师', '设计师', '经理', '分析师', '架构师', '工程师'],
+                        companies: ['科技未来有限公司', '创新软件技术', '数字互联科技', '智能系统开发', '云服务科技', '网络安全'],
+                        locations: ['北京', '上海', '深圳', '杭州', '广州', '成都'],
+                        salaries: ['15K-25K', '18K-30K', '25K-40K', '10K-18K', '30K-50K', '12K-20K'],
+                        experiences: ['1-3年', '3-5年', '5-10年', '应届生', '不限'],
+                        educations: ['本科', '大专', '硕士', '不限'],
+                        tags: ['HTML/CSS', 'JavaScript', 'Vue.js', 'React', 'Java', 'Python', 'Spring Boot', 'MySQL', '产品设计', 'UI设计', '数据分析', '云计算']
+                    },
+                    finance: {
+                        titlePrefixes: ['金融', '投资', '风控', '财务', '保险', '信贷', '资产管理', '证券'],
+                        titles: ['分析师', '经理', '顾问', '专员', '主管', '总监'],
+                        companies: ['金融科技集团', '投资管理公司', '保险服务', '银行科技', '证券有限公司', '资产管理'],
+                        locations: ['北京', '上海', '深圳', '广州', '成都', '南京'],
+                        salaries: ['18K-30K', '25K-45K', '12K-22K', '30K-60K', '15K-28K', '20K-40K'],
+                        experiences: ['1-3年', '3-5年', '5-10年', '10年以上', '不限'],
+                        educations: ['本科', '硕士', '博士', '不限'],
+                        tags: ['金融分析', '投资银行', '风控管理', '财务分析', '保险精算', '信贷评估', '资产管理', '证券交易']
+                    },
+                    education: {
+                        titlePrefixes: ['高级', '初级', '资深', '国际', '少儿', '成人', '在线', '高校'],
+                        titles: ['教师', '课程顾问', '培训师', '教研员', '教务', '教学总监'],
+                        companies: ['教育科技', '培训中心', '国际学校', '在线教育', '语言培训', '职业教育'],
+                        locations: ['北京', '上海', '广州', '深圳', '杭州', '武汉'],
+                        salaries: ['8K-15K', '10K-20K', '15K-30K', '12K-25K', '6K-12K', '20K-40K'],
+                        experiences: ['应届生', '1-3年', '3-5年', '5-10年', '不限'],
+                        educations: ['大专', '本科', '硕士', '不限'],
+                        tags: ['教学', '课程设计', '培训', '教育咨询', '学科辅导', '语言教学', '在线教育', '教学设计']
+                    },
+                    manufacture: {
+                        titlePrefixes: ['机械', '电子', '自动化', '工艺', '质量', '生产', '设备', '研发'],
+                        titles: ['工程师', '技术员', '主管', '经理', '工艺师', '设计师'],
+                        companies: ['制造集团', '电子科技', '机械制造', '汽车零部件', '自动化设备', '精密仪器'],
+                        locations: ['上海', '苏州', '无锡', '东莞', '佛山', '重庆'],
+                        salaries: ['8K-15K', '10K-18K', '15K-25K', '12K-20K', '20K-35K', '18K-30K'],
+                        experiences: ['1-3年', '3-5年', '5-10年', '不限', '应届生'],
+                        educations: ['大专', '本科', '硕士', '不限'],
+                        tags: ['机械设计', '电子工程', '自动化控制', '工艺优化', '质量检测', '生产管理', '设备维护', '研发']
+                    },
+                    healthcare: {
+                        titlePrefixes: ['临床', '医药', '医疗器械', '生物', '研发', '医学', '健康', '护理'],
+                        titles: ['专员', '工程师', '研究员', '医生', '护士', '顾问', '经理'],
+                        companies: ['医疗科技', '生物制药', '医疗器械', '健康管理', '医药公司', '体检中心'],
+                        locations: ['北京', '上海', '广州', '深圳', '成都', '杭州'],
+                        salaries: ['10K-20K', '15K-30K', '20K-40K', '12K-25K', '8K-15K', '30K-60K'],
+                        experiences: ['应届生', '1-3年', '3-5年', '5-10年', '不限'],
+                        educations: ['大专', '本科', '硕士', '博士', '不限'],
+                        tags: ['临床医学', '药物研发', '医疗器械', '生物科技', '健康管理', '医学检验', '护理', '医疗销售']
+                    }
+                };
+
+                const config = industryConfig[industry] || industryConfig.it;
+                const jobs = [];
+
+                // 每页生成6个职位
+                for (let i = 0; i < 6; i++) {
+                    const randomTitle = `${config.titlePrefixes[Math.floor(Math.random() * config.titlePrefixes.length)]}${config.titles[Math.floor(Math.random() * config.titles.length)]}`;
+                    const randomCompany = config.companies[Math.floor(Math.random() * config.companies.length)];
+                    const randomLocation = config.locations[Math.floor(Math.random() * config.locations.length)];
+                    const randomSalary = config.salaries[Math.floor(Math.random() * config.salaries.length)];
+                    const randomExperience = config.experiences[Math.floor(Math.random() * config.experiences.length)];
+                    const randomEducation = config.educations[Math.floor(Math.random() * config.educations.length)];
+
+                    // 随机生成3-5个标签
+                    const randomTags = [];
+                    const tagCount = Math.floor(Math.random() * 3) + 3;
+                    const shuffledTags = [...config.tags].sort(() => 0.5 - Math.random());
+                    for (let j = 0; j < tagCount; j++) {
+                        randomTags.push(shuffledTags[j]);
+                    }
+
+                    // 生成随机日期（过去7天内）
+                    const randomDate = new Date(baseDate);
+                    randomDate.setDate(baseDate.getDate() - Math.floor(Math.random() * 7));
+                    const formattedDate = randomDate.toISOString().split('T')[0];
+
+                    jobs.push({
+                        title: randomTitle,
+                        company: randomCompany,
+                        companyLogo: `https://picsum.photos/seed/${industry}${page}${i}/100/100`,
+                        location: randomLocation,
+                        salary: randomSalary,
+                        experience: randomExperience,
+                        education: randomEducation,
+                        tags: randomTags,
+                        postDate: formattedDate,
+                        industry: industry
+                    });
+                }
+
+                return jobs;
+            }
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,551 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>招聘平台</title>
+    <style>
+        /* 全局重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        /* 页面背景 */
+        body {
+            background: linear-gradient(to bottom right, #e6f7ff, #f9fcff);
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 - 左右分区 */
+        .top-nav {
+            background-color: #2f88ff;
+            display: flex;
+            justify-content: space-between; /* 左右分区 */
+            align-items: center;
+            height: 60px;
+            padding: 0 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .nav-left, .nav-right {
+            display: flex;
+            align-items: center;
+        }
+        .nav-left a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            margin-right: 20px; /* 左侧导航项间距 */
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .nav-right a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            margin-left: 10px; /* 右侧导航项间距 */
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .top-nav a:hover {
+            background-color: #1a73e8;
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #fff;
+            margin-left: 10px;
+            overflow: hidden;
+        }
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 主容器布局 - 增加左右留白 */
+        .container {
+            display: flex;
+            padding: 20px 5%; /* 左右各5%留白 */
+            gap: 20px;
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+
+        /* 搜索框板块 */
+        .search-section {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin: 20px 5%; /* 左右各5%留白 */
+            max-width: 1920px;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+        }
+        .search-box input {
+            flex: 1;
+            height: 40px;
+            padding: 0 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+        }
+        .search-box button {
+            height: 40px;
+            width: 100px;
+            background: #2f88ff;
+            color: #fff;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+        }
+        .search-box button:hover {
+            background: #1a73e8;
+        }
+
+        /* 三列布局 */
+        .triple-section {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+        }
+
+        /* 左侧职类导航 - 带下拉菜单 */
+        .category-nav {
+            width: 220px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+        .category-nav h2 {
+            font-size: 20px;
+            color: #2f88ff;
+            margin-bottom: 15px;
+        }
+        .category-item {
+            position: relative;
+        }
+        .category-item > a {
+            display: block;
+            color: #333;
+            text-decoration: none;
+            padding: 8px 10px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .category-item:hover > a {
+            background: #f2f9ff;
+            color: #2f88ff;
+        }
+        .sub-category {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: 0;
+            min-width: 200px;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 10;
+            padding: 10px;
+        }
+        .category-item:hover .sub-category {
+            display: block;
+        }
+        .sub-category a {
+            display: block;
+            color: #333;
+            text-decoration: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .sub-category a:hover {
+            background: #f2f9ff;
+        }
+
+        /* 中间轮播图 */
+        .middle-content {
+            flex: 1;
+        }
+
+        /* 轮播图板块（16:9比例） */
+        .banner {
+            width: 100%;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            position: relative;
+            border-radius: 8px;
+        }
+        .banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .banner img.active {
+            opacity: 1;
+        }
+
+        /* 企业展示板块 */
+        .companies-section {
+            background: #f9fcff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+        .companies-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .companies {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+        }
+        .company-card {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        .company-image {
+            width: 100%;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+        }
+        .company-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .company-info {
+            padding: 15px;
+            text-align: center;
+        }
+
+        /* 右侧用户面板 */
+        .user-panel {
+            width: 280px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 20px;
+            text-align: center;
+        }
+        .user-panel h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .user-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+        .user-stats div {
+            color: #666;
+        }
+        .user-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .user-buttons button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .user-buttons .btn-blue {
+            background: #2f88ff;
+            color: #fff;
+        }
+        .user-buttons .btn-gray {
+            background: #f2f2f2;
+            color: #333;
+        }
+        .user-features {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .user-features img {
+            width: 40px;
+            height: 40px;
+        }
+        .user-tip {
+            font-size: 14px;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        /* 响应式适配（小屏幕折叠） */
+        @media (max-width: 1200px) {
+            .triple-section {
+                flex-wrap: wrap;
+            }
+            .category-nav, .middle-content, .user-panel {
+                width: 100%;
+            }
+            .companies {
+                flex-wrap: wrap;
+            }
+            .company-card {
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .top-nav {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px;
+            }
+            .nav-left, .nav-right {
+                flex: 1;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .nav-left a {
+                margin: 5px;
+                font-size: 14px;
+            }
+            .nav-right a {
+                margin: 5px;
+                font-size: 14px;
+            }
+            .user-avatar {
+                margin: 5px;
+            }
+            .sub-category {
+                left: 0;
+                top: 100%;
+            }
+            .container, .search-section {
+                padding: 20px 5%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 顶部导航栏 -->
+<header class="top-nav">
+    <div class="nav-left">
+        <a href="#">首页</a>
+        <a href="#">找工作</a>
+        <a href="#">发布工作</a>
+    </div>
+    <div class="nav-right">
+        <a href="#">田壮健</a>
+        <div class="user-avatar">
+            <img src="avatar.jpg" alt="用户头像" />
+        </div>
+    </div>
+</header>
+
+<!-- 搜索框单独板块 -->
+<div class="search-section">
+    <div class="search-box">
+        <input type="text" placeholder="搜索职位、公司" />
+        <button>搜索</button>
+    </div>
+</div>
+
+<!-- 主容器 -->
+<div class="container">
+    <!-- 三列布局：职类导航 + 轮播图 + 用户面板 -->
+    <div class="triple-section">
+        <!-- 左侧职类导航 -->
+        <nav class="category-nav">
+            <h2>职类导航</h2>
+            <div class="category-item">
+                <a href="#">互联网IT</a>
+                <div class="sub-category">
+                    <a href="#">前端开发</a>
+                    <a href="#">后端开发</a>
+                    <a href="#">移动开发</a>
+                    <a href="#">测试开发</a>
+                    <a href="#">大数据</a>
+                    <a href="#">人工智能</a>
+                </div>
+            </div>
+            <div class="category-item">
+                <a href="#">金融</a>
+                <div class="sub-category">
+                    <a href="#">投资银行</a>
+                    <a href="#">风险管理</a>
+                    <a href="#">保险精算</a>
+                    <a href="#">金融科技</a>
+                    <a href="#">财务分析</a>
+                </div>
+            </div>
+            <div class="category-item">
+                <a href="#">房地产/建筑</a>
+                <div class="sub-category">
+                    <a href="#">建筑设计</a>
+                    <a href="#">工程管理</a>
+                    <a href="#">造价预算</a>
+                    <a href="#">房地产营销</a>
+                    <a href="#">城市规划</a>
+                </div>
+            </div>
+            <div class="category-item">
+                <a href="#">贸易/零售/物流</a>
+                <div class="sub-category">
+                    <a href="#">国际贸易</a>
+                    <a href="#">供应链管理</a>
+                    <a href="#">采购专员</a>
+                    <a href="#">物流规划</a>
+                    <a href="#">电子商务</a>
+                </div>
+            </div>
+            <div class="category-item">
+                <a href="#">教育/传媒/广告</a>
+                <div class="sub-category">
+                    <a href="#">教育培训</a>
+                    <a href="#">媒体记者</a>
+                    <a href="#">广告策划</a>
+                    <a href="#">市场营销</a>
+                    <a href="#">内容创作</a>
+                </div>
+            </div>
+            <div class="category-item">
+                <a href="#">服务业</a>
+                <div class="sub-category">
+                    <a href="#">酒店管理</a>
+                    <a href="#">旅游服务</a>
+                    <a href="#">餐饮管理</a>
+                    <a href="#">美容美发</a>
+                    <a href="#">健康养生</a>
+                </div>
+            </div>
+            <div class="category-item">
+                <a href="#">市场/销售</a>
+                <div class="sub-category">
+                    <a href="#">市场调研</a>
+                    <a href="#">品牌管理</a>
+                    <a href="#">销售代表</a>
+                    <a href="#">客户管理</a>
+                    <a href="#">商务拓展</a>
+                </div>
+            </div>
+            <div class="category-item">
+                <a href="#">人事/财务/行政</a>
+                <div class="sub-category">
+                    <a href="#">人力资源</a>
+                    <a href="#">会计审计</a>
+                    <a href="#">行政管理</a>
+                    <a href="#">法务合规</a>
+                    <a href="#">财务分析</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 中间轮播图 -->
+        <div class="middle-content">
+            <!-- 轮播图 -->
+            <div class="banner">
+                <img src="pic01.png" class="active" />
+                <img src="pic02.png"  />
+                <img src="pic03.png"  />
+            </div>
+
+            <!-- 企业展示 -->
+            <div class="companies-section">
+                <h2>本季热招企业</h2>
+                <div class="companies">
+                    <div class="company-card">
+                        <div class="company-image">
+                            <img src="pic01.png" alt="企业1" />
+                        </div>
+                        <div class="company-info">
+                            <p>中国人民财产保险股份有限公司</p>
+                        </div>
+                    </div>
+                    <div class="company-card">
+                        <div class="company-image">
+                            <img src="pic02.png" alt="企业2" />
+                        </div>
+                        <div class="company-info">
+                            <p>济南政金通达投资管理有限公司</p>
+                        </div>
+                    </div>
+                    <div class="company-card">
+                        <div class="company-image">
+                            <img src="pic03.png" alt="企业3" />
+                        </div>
+                        <div class="company-info">
+                            <p>简历优化服务</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧用户面板 -->
+        <section class="user-panel">
+            <h3>Hi, 用户</h3>
+            <div class="user-stats">
+                <div>我的投递：0</div>
+                <div>面试邀请：0</div>
+            </div>
+            <div class="user-buttons">
+                <button class="btn-blue">在线简历</button>
+                <button class="btn-gray">个人中心</button>
+            </div>
+            <div class="user-features">
+                <img src="icon1.png" alt="简历代投" />
+                <img src="icon2.png" alt="简历置顶" />
+                <img src="icon3.png" alt="简历优化" />
+                <img src="icon4.png" alt="简历模板" />
+            </div>
+            <div class="user-tip">
+                专家帮你优化简历<br/>
+                坐等面试机会
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- 轮播图JS逻辑 -->
+<script>
+    const banners = document.querySelectorAll('.banner img');
+    let current = 0;
+    const total = banners.length;
+
+    function switchBanner() {
+        banners[current].classList.remove('active');
+        current = (current + 1) % total;
+        banners[current].classList.add('active');
+    }
+    setInterval(switchBanner, 3000); // 每3秒切换
+</script>
+
+</body>
+</html>
+
+    

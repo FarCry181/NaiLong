@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蓝精领 - 找工作</title>
+    <!-- 引入Vue.js和Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        /* 保留原有的CSS样式不变 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #e0f7fa, #fff1e6, #d0f4de);
+            background-size: 400% 400%;
+            animation: gradientAnimation 15s ease infinite;
+        }
+
+        @keyframes gradientAnimation {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+
+        .header {
+            background: linear-gradient(90deg, #3a78c2, #4a90e2);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 500;
+            transition: all 0.3s ease;
+        }
+
+        .header:hover {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 0 15px rgba(255,255,255,0.4);
+            transition: transform 0.5s ease;
+        }
+
+        .logo:hover {
+            transform: rotate(360deg);
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            margin: 0 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            opacity: 0.9;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* 用户信息区域 */
+        .user-section {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            border: 2px solid white;
+        }
+
+        .user-name {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 150px;
+            padding: 10px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .user-section:hover .user-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 8px 20px;
+            color: #333;
+            text-decoration: none;
+            display: block;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f5f5f5;
+            color: #4a90e2;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 50px 0;
+            position: relative;
+        }
+
+        .search-container::before {
+            content: '';
+            position: absolute;
+            width: 120%;
+            height: 150%;
+            top: -25%;
+            left: -10%;
+            background: radial-gradient(ellipse at center, rgba(74, 144, 226, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .search-input {
+            padding: 14px 24px;
+            border: 2px solid #ddd;
+            border-radius: 30px;
+            width: 500px;
+            max-width: 80%;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .search-input:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: #bbb;
+            transition: color 0.3s;
+        }
+
+        .search-input:focus::placeholder {
+            color: #ddd;
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, #4a90e2, #3a78c2);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: -50px;
+            transition: all 0.3s;
+            box-shadow: 0 3px 8px rgba(58, 120, 194, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(58, 120, 194, 0.4);
+        }
+
+        .search-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(58, 120, 194, 0.3);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .industry-section {
+            width: 100%;
+            max-width: 1200px;
+            margin: 40px 0;
+        }
+
+        .section-title {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #4a90e2, transparent);
+            margin: 10px auto;
+        }
+
+        .industry-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            padding: 0 20px;
+        }
+
+        .industry-item {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+
+        .industry-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            border-color: rgba(74, 144, 226, 0.3);
+        }
+
+        .carousel-section {
+            width: 100%;
+            max-width: 1200px;
+            margin: 50px 0;
+        }
+
+        .carousel-container {
+            width: 100%;
+            height: 350px;
+            overflow: hidden;
+            position: relative;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .carousel-track {
+            display: flex;
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .carousel-image {
+            min-width: 100%;
+            height: 100%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .features-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 60px 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        /* 职位推荐模块 */
+        .job-section {
+            width: 100%;
+            max-width: 1200px;
+            margin: 60px 0;
+        }
+
+        .job-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .job-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.12);
+        }
+
+        .job-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .job-company {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .job-salary {
+            color: #ff6b6b;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .job-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .job-tag {
+            background: #f0f4ff;
+            color: #4a90e2;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .job-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 10px 15px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nav-link {
+                margin: 0 10px;
+                font-size: 14px;
+            }
+
+            .search-input {
+                width: 70%;
+                padding: 12px 20px;
+            }
+
+            .search-button {
+                padding: 12px 20px;
+                margin-left: -45px;
+            }
+
+            .industry-list {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .carousel-container {
+                height: 200px;
+                border-radius: 10px;
+            }
+
+            .features-section {
+                grid-template-columns: 1fr;
+                margin: 30px 0;
+            }
+
+            .job-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <img src="picture/logo.png" alt="蓝精领招聘平台Logo" class="logo">
+        <nav>
+            <a href="#" class="nav-link" @click="fetchRegions">地区</a>
+            <a href="#" class="nav-link" @click="fetchHomeData">首页</a>
+            <a href="#" class="nav-link" @click="fetchJobs">找工作</a>
+            <a href="#" class="nav-link" @click="showPostJobForm">发布工作</a>
+        </nav>
+
+        <!-- 用户信息区域 -->
+        <div class="user-section">
+            <img :src="user.avatar" alt="用户头像" class="user-avatar">
+            <span class="user-name">{{ user.name }}</span>
+
+            <!-- 用户下拉菜单 -->
+            <div class="user-dropdown">
+                <a href="#" class="dropdown-item" @click="goToProfile">个人中心</a>
+                <a href="#" class="dropdown-item" @click="goToResume">我的简历</a>
+                <a href="#" class="dropdown-item" @click="goToApplications">投递记录</a>
+                <a href="#" class="dropdown-item" @click="goToSettings">账号设置</a>
+                <a href="#" class="dropdown-item" @click="logout">退出登录</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" placeholder="输入职位、公司或关键词" class="search-input" v-model="searchQuery">
+        <button class="search-button" @click="searchJobs">搜索 🔍</button>
+    </div>
+
+    <div class="main-content">
+        <div class="industry-section">
+            <h2 class="section-title">热门行业</h2>
+            <div class="industry-list">
+                <div class="industry-item" v-for="industry in industries" :key="industry" @click="fetchIndustryJobs(industry)">
+                    {{ industry }}
+                </div>
+            </div>
+        </div>
+
+        <div class="carousel-section">
+            <h2 class="section-title">热门职位</h2>
+            <div class="carousel-container">
+                <div class="carousel-track" id="carouselTrack">
+                    <img :src="carousel.currentImage" alt="热门职位展示" class="carousel-image">
+                </div>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">精准匹配</h3>
+                <p>智能算法推荐最适合您的职位</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h3 class="feature-title">快速入职</h3>
+                <p>海量职位，72小时快速反馈</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h3 class="feature-title">安全可靠</h3>
+                <p>严格审核企业资质，保障求职安全</p>
+            </div>
+        </div>
+
+        <div class="job-section">
+            <h2 class="section-title">推荐职位</h2>
+            <div class="job-list">
+                <div class="job-card" v-for="job in jobs" :key="job.id">
+                    <h3 class="job-title">{{ job.title }}</h3>
+                    <div class="job-company">{{ job.company }} · {{ job.location }}</div>
+                    <div class="job-salary">{{ job.salary }}</div>
+                    <div class="job-tags">
+                        <span class="job-tag" v-for="tag in job.tags" :key="tag">{{ tag }}</span>
+                    </div>
+                    <div class="job-footer">
+                        <span>{{ job.experience }}</span>
+                        <span>{{ job.education }}</span>
+                    </div>
+                    <button class="search-button" style="margin-top: 15px; width: 100%;" @click="applyJob(job.id)">
+                        立即投递
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 发布工作表单（模态框） -->
+    <div v-if="showPostForm" class="modal-overlay">
+        <div class="modal">
+            <h3>发布新职位</h3>
+            <form @submit.prevent="postJob">
+                <div class="form-group">
+                    <label>职位名称</label>
+                    <input type="text" v-model="newJob.title" required>
+                </div>
+                <div class="form-group">
+                    <label>公司名称</label>
+                    <input type="text" v-model="newJob.company" required>
+                </div>
+                <div class="form-group">
+                    <label>工作地点</label>
+                    <input type="text" v-model="newJob.location" required>
+                </div>
+                <div class="form-group">
+                    <label>薪资范围</label>
+                    <input type="text" v-model="newJob.salary" required>
+                </div>
+                <div class="form-group">
+                    <label>职位描述</label>
+                    <textarea v-model="newJob.description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>职位要求</label>
+                    <textarea v-model="newJob.requirements" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" @click="showPostForm = false">取消</button>
+                    <button type="submit">发布</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 设置axios默认配置
+    axios.defaults.baseURL = 'https://your-api-domain.com/api'; // 替换为你的API基础URL
+    axios.defaults.headers.common['Authorization'] = 'Bearer ' + localStorage.getItem('token');
+    axios.defaults.headers.post['Content-Type'] = 'application/json';
+
+    new Vue({
+        el: '#app',
+        data: {
+            user: {
+                name: '张小蓝',
+                avatar: 'https://randomuser.me/api/portraits/women/65.jpg'
+            },
+            searchQuery: '',
+            industries: ['互联网IT', '金融', '教育', '物流', '服务业', '房地产', '医疗健康', '制造业'],
+            jobs: [],
+            carousel: {
+                images: [
+                    'picture/pic01.png',
+                    'picture/pic02.png',
+                    'picture/pic03.png'
+                ],
+                currentIndex: 0,
+                interval: null
+            },
+            showPostForm: false,
+            newJob: {
+                title: '',
+                company: '',
+                location: '',
+                salary: '',
+                description: '',
+                requirements: ''
+            }
+        },
+        computed: {
+            currentCarouselImage() {
+                return this.carousel.images[this.carousel.currentIndex];
+            }
+        },
+        created() {
+            // 初始化时获取推荐职位
+            this.fetchRecommendedJobs();
+            // 启动轮播图
+            this.startCarousel();
+        },
+        beforeDestroy() {
+            // 清除轮播图定时器
+            if (this.carousel.interval) {
+                clearInterval(this.carousel.interval);
+            }
+        },
+        methods: {
+            // 获取地区数据
+            fetchRegions() {
+                axios.get('/regions')
+                    .then(response => {
+                        console.log('地区数据:', response.data);
+                        // 这里可以处理地区数据，比如显示在模态框中
+                        alert('获取地区数据成功，请查看控制台输出');
+                    })
+                    .catch(error => {
+                        console.error('获取地区数据失败:', error);
+                        alert('获取地区数据失败');
+                    });
+            },
+
+            // 获取首页数据
+            fetchHomeData() {
+                // 首页可能包含多个数据集，可以合并请求
+                Promise.all([
+                    axios.get('/jobs/recommended'),
+                    axios.get('/industries/hot')
+                ])
+                    .then(([jobsResponse, industriesResponse]) => {
+                        this.jobs = jobsResponse.data;
+                        this.industries = industriesResponse.data;
+                        console.log('首页数据加载完成');
+                    })
+                    .catch(error => {
+                        console.error('加载首页数据失败:', error);
+                        alert('加载首页数据失败');
+                    });
+            },
+
+            // 搜索职位
+            searchJobs() {
+                if (!this.searchQuery.trim()) {
+                    alert('请输入搜索关键词');
+                    return;
+                }
+
+                axios.get('/jobs/search', {
+                    params: {
+                        q: this.searchQuery
+                    }
+                })
+                    .then(response => {
+                        this.jobs = response.data;
+                        console.log('搜索结果:', response.data);
+                    })
+                    .catch(error => {
+                        console.error('搜索失败:', error);
+                        alert('搜索失败');
+                    });
+            },
+
+            // 获取推荐职位
+            fetchRecommendedJobs() {
+                axios.get('/jobs/recommended')
+                    .then(response => {
+                        this.jobs = response.data;
+                    })
+                    .catch(error => {
+                        console.error('获取推荐职位失败:', error);
+                    });
+            },
+
+            // 获取特定行业的职位
+            fetchIndustryJobs(industry) {
+                axios.get('/jobs/industry', {
+                    params: {
+                        industry: industry
+                    }
+                })
+                    .then(response => {
+                        this.jobs = response.data;
+                        console.log(`${industry}行业职位:`, response.data);
+                    })
+                    .catch(error => {
+                        console.error('获取行业职位失败:', error);
+                        alert('获取行业职位失败');
+                    });
+            },
+
+            // 显示发布工作表单
+            showPostJobForm() {
+                this.showPostForm = true;
+            },
+
+            // 发布新职位
+            postJob() {
+                axios.post('/jobs', this.newJob)
+                    .then(response => {
+                        console.log('职位发布成功:', response.data);
+                        alert('职位发布成功');
+                        this.showPostForm = false;
+                        this.newJob = {
+                            title: '',
+                            company: '',
+                            location: '',
+                            salary: '',
+                            description: '',
+                            requirements: ''
+                        };
+                        // 刷新职位列表
+                        this.fetchRecommendedJobs();
+                    })
+                    .catch(error => {
+                        console.error('职位发布失败:', error);
+                        alert('职位发布失败');
+                    });
+            },
+
+            // 申请职位
+            applyJob(jobId) {
+                axios.post(`/jobs/${jobId}/apply`)
+                    .then(response => {
+                        console.log('申请成功:', response.data);
+                        alert('职位申请已提交');
+                    })
+                    .catch(error => {
+                        console.error('申请失败:', error);
+                        alert('申请失败');
+                    });
+            },
+
+            // 导航方法
+            goToProfile() {
+                console.log('跳转到个人中心');
+                // 实际项目中可能是: this.$router.push('/profile')
+            },
+
+            goToResume() {
+                console.log('跳转到我的简历');
+                // 实际项目中可能是: this.$router.push('/resume')
+            },
+
+            goToApplications() {
+                console.log('跳转到投递记录');
+                // 实际项目中可能是: this.$router.push('/applications')
+            },
+
+            goToSettings() {
+                console.log('跳转到账号设置');
+                // 实际项目中可能是: this.$router.push('/settings')
+            },
+
+            // 退出登录
+            logout() {
+                localStorage.removeItem('token');
+                axios.defaults.headers.common['Authorization'] = null;
+                console.log('用户已退出登录');
+                // 实际项目中可能是: this.$router.push('/login')
+                alert('您已成功退出登录');
+            },
+
+            // 轮播图方法
+            startCarousel() {
+                this.carousel.interval = setInterval(() => {
+                    this.carousel.currentIndex = (this.carousel.currentIndex + 1) % this.carousel.images.length;
+                }, 3000);
+
+                // 鼠标悬停暂停轮播
+                const carouselContainer = document.querySelector('.carousel-container');
+                carouselContainer.addEventListener('mouseenter', () => {
+                    if (this.carousel.interval) {
+                        clearInterval(this.carousel.interval);
+                    }
+                });
+
+                carouselContainer.addEventListener('mouseleave', () => {
+                    this.startCarousel();
+                });
+            }
+        }
+    });
+</script>
+</body>
+</html>
